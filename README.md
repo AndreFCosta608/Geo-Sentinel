@@ -166,11 +166,11 @@ Real-time operation logs showing everything from Sentinel-2 biomass detection to
 |:---:|:---:|:---:|
 | Main Dashboard | Spectral Index Processing | Conflict Mapping |
 
-| ![Screen 4](prints/4.jpg) | ![Screen 5](prints/5.jpg) | ![Screen 6](prints/6.png) |
+| ![Screen 4](prints/4.png) | ![Screen 5](prints/5.png) | ![Screen 6](prints/6.png) |
 |:---:|:---:|:---:|
 | Server-side Logs | Vegetation Detection | Mission Filtering |
 
-| ![Screen 7](prints/7.png) | ![Screen 8](prints/8.jpg) | ![Screen 9](prints/9.jpg) |
+| ![Screen 7](prints/7.png) | ![Screen 8](prints/8.png) | ![Screen 9](prints/9.png) |
 |:---:|:---:|:---:|
 | GIS Visualization | Point-cloud Details | Reverse Geocoding |
 
