@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>404 - Página não encontrada</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="/static/imagens/escolinhaPequena.ico">
+  <style>
+	
+	body {
+	  background-color: #1a3d2f; /* verde escuro da selva */
+	}
+	
+	html, body {
+	  margin: 0;
+	  padding: 0;
+	  height: 100%;
+	  width: 100%;
+	  overflow: hidden;
+	}
+
+	.bg-img {
+	  position: absolute;
+	  top: 50%;
+	  left: 50%;
+	  transform: translate(-50%, -50%);
+	  width: 100vw;
+	  height: 100vh;
+	  object-fit: contain; /* preserva proporção sem cortar */
+	}
+
+    .bg-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .bg-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* preserva proporção sem cortar */
+    }
+
+    .mensagem {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.6);
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+      max-width: 90%;
+      width: 500px;
+    }
+
+    .mensagem h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    .mensagem p {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+	
+	.bussola {
+	  width: 130px;
+	  margin-bottom: 15px;
+	}
+
+    .mensagem a {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #ffd700;
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+
+    .mensagem a:hover {
+      background: #ffcc00;
+    }
+
+    @media (max-width: 600px) {
+      .mensagem {
+        width: 90%;
+        padding: 20px;
+      }
+
+      .mensagem h1 {
+        font-size: 1.5em;
+      }
+
+      .mensagem p {
+        font-size: 1em;
+      }
+
+      .mensagem a {
+        padding: 10px 20px;
+        font-size: 0.9em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <img src="/static/imagens/404-bandeirantes.png" alt="Carro de verdade na selva" class="bg-img">
+  <div class="mensagem">
+    <h1>😅 Ops! Você se perdeu, mas só um pouquinho...</h1>
+    <p>Relaxa que a estrada já está logo ali!</p>
+	<center>
+		<img src="/static/imagens/bussola.png" alt="Bússola" class="bussola">
+	</center>
+    <a href="/home">Voltar para a estrada</a>
+  </div>
+
+</body>
+</html>

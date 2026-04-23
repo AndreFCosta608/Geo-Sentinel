@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo-Sentinel v0.1.0 - Earth Observation</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    
+    <style>
+        body { background-color: #f8fafc; color: #334155; font-family: 'Inter', sans-serif; }
+        #map { height: calc(100vh - 200px); width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; position: relative; }
+        .sidebar { background: white; border-right: 1px solid #e2e8f0; }
+        
+        .btn-missao { 
+            width: 100%; text-align: left; padding: 12px; border: 1px solid #e2e8f0; 
+            margin-bottom: 8px; border-radius: 6px; transition: 0.3s;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .btn-missao:hover { background: #f1f5f9; }
+        .btn-missao.active { border-left: 4px solid #0ea5e9; background: #f0f9ff; font-weight: bold; }
+        
+        .console-log { background: #1e293b; color: #38bdf8; font-family: 'Fira Code', monospace; font-size: 0.85rem; }
+        
+        #modal-tutorial { display: none; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
+        
+        #loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            border-radius: 8px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0ea5e9;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .popup-confirm-btn { background-color: #0ea5e9; color: white; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; margin-top: 8px; }
+        .popup-cancel-btn { background-color: #94a3b8; color: white; padding: 6px 14px; border-radius: 4px; cursor: pointer; border: none; margin-left: 5px; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+    <div id="modal-tutorial" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col md:flex-row">
+            <div class="md:w-1/2 bg-slate-200">
+                <img src="/static/imagens/tutorial_preview.jpg" alt="Tutorial" class="h-full w-full object-cover">
+            </div>
+            <div class="md:w-1/2 p-8">
+                <h2 class="text-2xl font-bold text-sky-600 mb-4">Geo-Sentinel v0.1</h2>
+                <div class="space-y-3 text-sm text-slate-600">
+                    <p>• Escolha a missão (Risco à rede elétrica ou Focos de Dengue).</p>
+                    <p>• Desenhe um quadrado na área de interesse.</p>
+                    <p>• Clique em <strong>BUSCAR</strong> para processar os dados na VPS.</p>
+                </div>
+                <button onclick="fecharModal()" class="mt-8 w-full bg-sky-600 text-white font-bold py-3 rounded-lg hover:bg-sky-700 transition">ENTENDI</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="sidebar w-80 p-6 flex flex-col shadow-lg overflow-y-auto">
+            <div class="mb-8 text-center md:text-left">
+                <h1 class="text-2xl font-bold tracking-tighter text-sky-600">GEO-SENTINEL</h1>
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Earth Observation</p>
+            </div>
+
+            <nav class="flex-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">Missões Disponíveis</p>
+                <button id="btn-poda" class="btn-missao active" onclick="selecionarMissao('poda')">
+                    <span>🌿</span> Rede Elétrica
+                </button>
+                <button id="btn-dengue" class="btn-missao" onclick="selecionarMissao('dengue')">
+                    <span>🦟</span> Epidemiologia
+                </button>
+                <div class="mt-4 pt-4 border-t">
+                    <button class="btn-missao" onclick="resetarMapa()">
+                        <span>🗑️</span> Limpar Filtros
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-6 relative flex flex-col">
+            <div class="relative flex-1">
+                <div id="map" class="shadow-inner"></div>
+                
+                <div id="loading-overlay">
+                    <div class="spinner mb-4"></div>
+                    <p class="text-sky-700 font-bold animate-pulse">PROCESSANDO NA VPS...</p>
+                    <p class="text-xs text-slate-500">Isso pode levar alguns segundos dependendo da área.</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 h-40 console-log p-4 rounded-lg overflow-y-auto shadow-2xl border-t-4 border-sky-500">
+                <div id="log-content">
+                    <p>> Sistema pronto. Selecione uma área e clique em buscar.</p>
+					<p>> ATENÇÃO... NA VERSÃO DEMO SOMENTE ALERTAS SOBRE O ESTADO DO RIO DE JANEIRO ESTARÃO DISPONÍVEIS.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+	
+    <script>
+        let missaoAtiva = 'poda';
+        const loading = document.getElementById('loading-overlay');
+
+        // Tutorial Delay
+        setTimeout(() => { document.getElementById('modal-tutorial').style.display = 'flex'; }, 3000);
+        function fecharModal() { document.getElementById('modal-tutorial').style.display = 'none'; }
+
+        function selecionarMissao(m) {
+            missaoAtiva = m;
+            document.querySelectorAll('.btn-missao').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${m}`).classList.add('active');
+            camadaAlertas.clearLayers();
+        }
+
+        function resetarMapa() {
+            drawnItems.clearLayers();
+            camadaAlertas.clearLayers();
+        }
+
+        // Configuração do Mapa
+        const map = L.map('map').setView([-22.8, -43.3], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // --- CAMADA DE ALERTAS TURBINADA ---
+        let camadaAlertas = L.geoJSON(null, {
+            pointToLayer: (feature, latlng) => L.circleMarker(latlng),
+            onEachFeature: (feature, layer) => {
+                layer.on('click', async function() {
+                    const titulo = feature.properties.titulo || "Alerta Detectado";
+                    layer.bindPopup(`<strong>${titulo}</strong><br>⏳ Buscando endereço...`).openPopup();
+                    
+                    try {
+                        const { lat, lng } = layer.getLatLng();
+                        // API Nominatim para Geocodificação Reversa
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+                        const result = await response.json();
+                        
+                        const endereco = result.display_name || "Endereço não identificado";
+                        const nivel = feature.properties.nivel || "N/A";
+                        
+                        layer.setPopupContent(`
+                            <div class="text-xs">
+                                <strong class="text-sky-600">${titulo}</strong><br>
+                                <p class="mt-1"><strong>Nível Crítico:</strong> ${nivel}</p>
+                                <p class="mt-1 border-t pt-1"><strong>📍 Endereço:</strong><br>${endereco}</p>
+                            </div>
+                        `).openPopup();
+                    } catch (e) {
+                        layer.setPopupContent("⚠️ Erro ao conectar com serviço de endereços.").openPopup();
+                    }
+                });
+            }
+        }).addTo(map);
+
+        const drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        const drawControl = new L.Control.Draw({
+            edit: { featureGroup: drawnItems },
+            draw: {
+                polygon: false, polyline: false, circle: false, marker: false, circlemarker: false,
+                rectangle: { shapeOptions: { color: '#0ea5e9', weight: 2 } }
+            }
+        });
+        map.addControl(drawControl);
+
+        // Função de Busca
+        async function buscarDados(bounds) {
+            const zoom = map.getZoom();
+            const log = document.getElementById('log-content');
+            loading.style.display = 'flex';
+            
+            const url = `/api/camadas/alertas?min_lat=${bounds.getSouth()}&min_lon=${bounds.getWest()}&max_lat=${bounds.getNorth()}&max_lon=${bounds.getEast()}&zoom=${zoom}&slug=${missaoAtiva}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                camadaAlertas.clearLayers();
+                camadaAlertas.addData(data);
+                
+                // Aplica o estilo visual nos pontos
+                camadaAlertas.setStyle(feature => {
+                    const ehCluster = feature.properties.total > 1;
+                    return {
+                        radius: ehCluster ? 12 : 8,
+                        fillColor: missaoAtiva === 'poda' ? (feature.properties.nivel > 3 ? '#ef4444' : '#f59e0b') : '#22c55e',
+                        color: "#fff", weight: 2, fillOpacity: 0.8
+                    };
+                });
+                
+                log.innerHTML += `<p class="text-green-400">> [OK] ${data.features.length} eventos carregados.</p>`;
+            } catch (e) {
+                log.innerHTML += `<p class="text-red-400">> [ERRO] Falha no processamento remoto.</p>`;
+            } finally {
+                loading.style.display = 'none';
+                log.scrollTop = log.scrollHeight;
+            }
+        }
+
+        // Listener do Desenho
+        map.on(L.Draw.Event.CREATED, function (e) {
+            const layer = e.layer;
+            drawnItems.clearLayers();
+            drawnItems.addLayer(layer);
+
+            const bounds = layer.getBounds();
+            const popupContent = `
+                <div class="text-center p-2">
+                    <p class="text-sm font-bold mb-1">Processar região?</p>
+                    <button id="confirm-search" class="popup-confirm-btn">BUSCAR</button>
+                    <button id="cancel-search" class="popup-cancel-btn">X</button>
+                </div>
+            `;
+
+            L.popup().setLatLng(bounds.getCenter()).setContent(popupContent).openOn(map);
+
+            document.getElementById('confirm-search').onclick = () => {
+                map.closePopup();
+                buscarDados(bounds);
+            };
+
+            document.getElementById('confirm-search').parentElement.querySelector('.popup-cancel-btn').onclick = () => {
+                drawnItems.clearLayers();
+                map.closePopup();
+            };
+        });
+    </script>
+</body>
+</html>

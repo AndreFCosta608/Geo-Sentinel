@@ -1,0 +1,13 @@
+# --- Banco de Dados e Infraestrutura ---
+psycopg2-binary>=2.9.0    # Conector PostgreSQL/PostGIS
+python-dotenv>=1.0.0      # Gestão de variáveis de ambiente (.env)
+
+# --- Processamento Geoespacial e Imagens ---
+rasterio>=1.3.0           # Leitura e manipulação de arquivos .tif
+numpy>=1.24.0             # Cálculos de matrizes (NDVI/NDWI)
+
+# --- Integração com API e Web ---
+requests>=2.28.0          # Downloads do INPE e consultas STAC
+
+# --- Utilidades ---
+pathlib>=1.0.1            # Manipulação robusta de caminhos de arquivos
